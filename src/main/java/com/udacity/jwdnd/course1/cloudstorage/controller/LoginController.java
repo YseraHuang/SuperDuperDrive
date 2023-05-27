@@ -12,4 +12,6 @@ public class LoginController {
     public String loginView() {
         return "login";
     }
+
+    // No explicit PostMapping. Since the Spring Security take care of the login
 }

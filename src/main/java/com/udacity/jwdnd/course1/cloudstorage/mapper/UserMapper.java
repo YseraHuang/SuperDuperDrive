@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface UserMapper {
-    @Select("SELECT * FROM USERS WHERE username = #{username}")
+    @Select("SELECT * FROM USERS WHERE username = #{username}") //it seems the field name is not case-sensitive?
     User getUser(String username);
 
     @Insert("INSERT INTO USERS (username, salt, password, firstname, lastname) VALUES(#{username}, #{salt}, #{password}, #{firstName}, #{lastName})")

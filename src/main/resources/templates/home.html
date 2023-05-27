@@ -11,7 +11,7 @@
     <body class="p-3 mb-2 bg-light text-black">
         <div class="container">
             <div id="logoutDiv">
-                <form action="#" method="POST">
+                <form action="#" th:action="@{/logout}" method="POST">
                     <button type="submit" class="btn btn-secondary float-right">Logout</button>
                 </form>
             </div>
@@ -25,7 +25,7 @@
                 </nav>
                 <div class="tab-content" id="nav-tabContent">
                     <div class="tab-pane fade show active" id="nav-files" role="tabpanel" aria-labelledby="nav-files-tab">
-                        <form action="#" enctype="multipart/form-data" method="POST">
+                        <form action="#" enctype="multipart/form-data" th:action="@{/createFile}" method="POST" onsubmit="return validateForm()">
                             <div class="container">
                                 <div class="row" style="margin: 1em;">
                                     <div class="col-sm-2">
@@ -34,6 +34,8 @@
                                     <div class="col-sm-6">
                                         <input type="file" class="form-control-file" id="fileUpload" name="fileUpload">
                                     </div>
+                                    <!-- Display error message -->
+                                    <p th:if="${error}" class="text-danger" th:text="${error}"></p>
                                     <div class="col-sm-4">
                                         <button type="submit" class="btn btn-dark" id="uploadButton">Upload</button>
                                     </div>
@@ -49,13 +51,13 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                <tr>
-                                    <td>
-                                        <a target="_blank" class="btn btn-success">View</a>
-                                        <a  class="btn btn-danger">Delete</a>
-                                    </td>
-                                    <th scope="row">ExampleFile.txt</th>
-                                </tr>
+                                    <tr th:each = "file:${Files}">
+                                        <td>
+                                            <a target="_blank" class="btn btn-success" th:href="@{/viewFile(fileId=${file.fileId})}">View</a>
+                                            <a  class="btn btn-danger" th:href="@{/deleteFile(fileId=${file.fileId})}">Delete</a>
+                                        </td>
+                                        <th scope="row" th:text="${file.fileName}">ExampleFile.txt</th>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -75,18 +77,19 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
+                                    <tr th:each = "note:${Notes}">
                                         <td>
-                                            <button type="button" class="btn btn-success">Edit</button>
-                                            <a class="btn btn-danger">Delete</a>
+                                            <button type="button" class="btn btn-success" th:attr="onclick='showNoteModal(\'' + ${note.noteId} + '\', \'' + ${note.noteTitle} + '\', \'' + ${note.noteDescription} + '\')'">Edit</button>
+                                            <a class="btn btn-danger" th:href="@{/deleteNote(noteId=${note.noteId})}">Delete</a>
                                         </td>
-                                        <th scope="row">Example Note Title</th>
-                                        <td>Example Note Description </td>
+                                        <th scope="row" th:text="${note.noteTitle}">Example Note Title</th>
+                                        <td th:text="${note.noteDescription}">Example Note Description </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
+                        <!--note box modal html-->
                         <div class="modal fade" id="noteModal" tabindex="-1" role="dialog" aria-labelledby="noteModalLabel" aria-hidden="true">
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">
@@ -97,7 +100,7 @@
                                         </button>
                                     </div>
                                     <div class="modal-body">
-                                        <form action="#" method="POST">
+                                        <form action="#" th:action="@{/createUpdateNote}" method="POST">
                                             <input type="hidden" name="noteId" id="note-id">
                                             <div class="form-group">
                                                 <label for="note-title" class="col-form-label">Title</label>
@@ -134,14 +137,14 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                <tr>
+                                <tr th:each="credential: ${Credentials}">
                                     <td>
-                                        <button type="button" class="btn btn-success">Edit</button>
-                                        <a class="btn btn-danger">Delete</a>
+                                        <button type="button" class="btn btn-success" th:attr="onclick='showCredentialModal(\'' + ${credential.credentialId} + '\', \'' + ${credential.url} + '\', \'' + ${credential.username} + '\', \'' + ${credential.password} + '\')'">Edit</button>
+                                        <a class="btn btn-danger" th:href="@{/deleteCredential(credentialId=${credential.credentialId})}">Delete</a>
                                     </td>
-                                    <th scope="row">Example Credential URL</th>
-                                    <td>Example Credential Username</td>
-                                    <td>Example Credential Password</td>
+                                    <th scope="row" th:text="${credential.url}">Example Credential URL</th>
+                                    <td th:text="${credential.username}">Example Credential Username</td>
+                                    <td th:text="${credential.password}">Example Credential Password</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -157,7 +160,7 @@
                                         </button>
                                     </div>
                                     <div class="modal-body">
-                                        <form action="#" method="POST">
+                                        <form action="#" method="POST" th:action="@{/createUpdateCredential}">
                                             <input type="hidden" name="credentialId" id="credential-id">
                                             <div class="form-group">
                                                 <label for="credential-url" class="col-form-label">URL</label>
@@ -192,7 +195,7 @@
 
         <!--For opening the note modal-->
         <script type="text/javascript">
-            // For opening the note modal
+            //For opening the note modal (JS Code)
             function showNoteModal(noteId, noteTitle, noteDescription) {
                 $('#note-id').val(noteId ? noteId : '');
                 $('#note-title').val(noteTitle ? noteTitle : '');
@@ -207,6 +210,18 @@
                 $('#credential-username').val(username ? username : '');
                 $('#credential-password').val(password ? password : '');
                 $('#credentialModal').modal('show');
+            }
+
+            //Validate the Upload File
+            function validateForm() {
+                var fileUpload = document.getElementById("fileUpload");
+
+                if (fileUpload.value === "") {
+                    alert("Please select a file to upload.");
+                    return false;
+                }
+
+                return true;
             }
         </script>
     </body>
